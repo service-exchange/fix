@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telecms
+spec:
+  selector:
+    matchLabels:
+      app: telecms
+  template:
+    metadata:
+      labels:
+        app: telecms
+    spec:
+      containers:
+        - name: telecms
+          image: "serviceexchange/telecms-ce:{{ .Chart.AppVersion }}"
+          imagePullPolicy: IfNotPresent
+          args: ["npm", "run", "start:prod"]
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              memory:
+                { { .Values.apps.telecms.deployment.resources.limits.memory } }
+              cpu: { { .Values.apps.telecms.deployment.resources.limits.cpu } }
+            requests:
+              memory:
+                {
+                  { .Values.apps.telecms.deployment.resources.requests.memory },
+                }
+              cpu:
+                { { .Values.apps.telecms.deployment.resources.requests.cpu } }
+          readinessProbe:
+            httpGet:
+              port: 3000
+              path: /api/health
+            successThreshold: 1
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 6
+          env:
+            - name: TELECMS_HOST
+              value: "{{ .Values.apps.telecms.service.host }}"
+            - name: PG_HOST
+              value: "{{ .Release.Name }}-postgresql"
+            - name: PG_USER
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.apps.telecms.secret.name }}"
+                  key: pg_user
+            - name: PG_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.apps.telecms.secret.name }}"
+                  key: pg_password
+            - name: PG_DB
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.apps.telecms.secret.name }}"
+                  key: pg_db
+            - name: LOCKBOX_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.apps.telecms.secret.name }}"
+                  key: lockbox_key
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.apps.telecms.secret.name }}"
+                  key: secret_key_base
+            - name: DEPLOYMENT_PLATFORM
+              value: "k8s:helm"

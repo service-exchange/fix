@@ -1,0 +1,94 @@
+import { Injectable } from '@nestjs/common';
+import { EntityManager } from 'typeorm/entity-manager/EntityManager';
+import { User } from '../entities/user.entity';
+import { Organization } from '../entities/organization.entity';
+import { OrganizationUser } from '../entities/organization_user.entity';
+import { GroupPermission } from 'src/entities/group_permission.entity';
+import { UserGroupPermission } from 'src/entities/user_group_permission.entity';
+
+@Injectable()
+export class SeedsService {
+  constructor(private readonly entityManager: EntityManager) {}
+
+  async perform(): Promise<void> {
+    await this.entityManager.transaction(async (manager) => {
+      const defaultUser = await manager.findOne(User, {
+        where: {
+          email: 'dev@service.exchange',
+        },
+      });
+
+      if (defaultUser) return;
+
+      const organization = manager.create(Organization, {
+        ssoConfigs: [
+          {
+            enabled: true,
+            sso: 'form',
+          },
+        ],
+        name: 'My workspace',
+      });
+
+      await manager.save(organization);
+
+      const user = manager.create(User, {
+        firstName: 'The',
+        lastName: 'Developer',
+        email: 'dev@service.exchange',
+        password: 'password',
+        defaultOrganizationId: organization.id,
+      });
+      user.organizationId = organization.id;
+
+      await manager.save(user);
+
+      // TODO: Remove role usage
+      const organizationUser = manager.create(OrganizationUser, {
+        organizationId: organization.id,
+        userId: user.id,
+        role: 'all_users',
+        status: 'active',
+      });
+
+      await manager.save(organizationUser);
+
+      await this.createDefaultUserGroups(manager, user);
+
+      console.log(
+        'Seeding complete. Use default credentials to login.\n' + 'email: dev@service.exchange\n' + 'password: password'
+      );
+    });
+  }
+
+  async createDefaultUserGroups(manager: EntityManager, user: User): Promise<void> {
+    const defaultGroups = ['all_users', 'admin'];
+    for (const group of defaultGroups) {
+      await this.createGroupAndAssociateUser(group, manager, user);
+    }
+  }
+
+  async createGroupAndAssociateUser(group: string, manager: EntityManager, user: User): Promise<void> {
+    const groupPermission = manager.create(GroupPermission, {
+      organizationId: user.organizationId,
+      group: group,
+      appCreate: group == 'admin',
+      appDelete: group == 'admin',
+      folderCreate: group == 'admin',
+      orgEnvironmentVariableCreate: group == 'admin',
+      orgEnvironmentVariableUpdate: group == 'admin',
+      orgEnvironmentVariableDelete: group == 'admin',
+      folderUpdate: group == 'admin',
+      folderDelete: group == 'admin',
+    });
+
+    await manager.save(groupPermission);
+
+    const userGroupPermission = manager.create(UserGroupPermission, {
+      groupPermissionId: groupPermission.id,
+      userId: user.id,
+    });
+
+    await manager.save(userGroupPermission);
+  }
+}
