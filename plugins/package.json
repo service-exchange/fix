@@ -52,11 +52,9 @@
     "@service-exchange/sendgrid": "file:packages/sendgrid",
     "@service-exchange/slack": "file:packages/slack",
     "@service-exchange/smtp": "file:packages/smtp",
-    "@service-exchange/snowflake": "file:packages/snowflake",
     "@service-exchange/stripe": "file:packages/stripe",
     "@service-exchange/twilio": "file:packages/twilio",
-    "@service-exchange/typesense": "file:packages/typesense",
-    "@service-exchange/woocommerce": "file:packages/woocommerce"
+    "@service-exchange/typesense": "file:packages/typesense"
   },
   "peerDependencies": {
     "typescript": "^4.5.4"
@@ -72,7 +70,7 @@
     "eslint-plugin-jest": "^24.4.2",
     "eslint-plugin-prettier": "^3.4.1",
     "jest": "^27.4.5",
-    "lerna": "^4.0.0",
+    "lerna": "^5.5.1",
     "prettier": "^2.3.2",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.1.2"

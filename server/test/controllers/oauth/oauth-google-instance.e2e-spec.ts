@@ -259,7 +259,10 @@ describe('oauth controller', () => {
         });
 
         it('Workspace Login - should return login info when the user does not exist and domain matches and sign up is enabled', async () => {
-          await orgRepository.update(current_organization.id, { domain: 'service.exchange,service.exchange', enableSignUp: true });
+          await orgRepository.update(current_organization.id, {
+            domain: 'service.exchange,telecms.com',
+            enableSignUp: true,
+          });
           const googleVerifyMock = jest.spyOn(OAuth2Client.prototype, 'verifyIdToken');
           googleVerifyMock.mockImplementation(() => ({
             getPayload: () => ({
